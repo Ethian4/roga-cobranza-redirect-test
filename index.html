@@ -1,0 +1,281 @@
+<title>Redirección Cobranza</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #f5f3ee;
+    --surface: #ffffff;
+    --surface-border: #e4e0d4;
+    --text: #1c211f;
+    --text-muted: #61675f;
+    --accent: #2f6f5e;
+    --accent-ink: #ffffff;
+    --accent-soft: #e4efe9;
+    --danger: #a4432f;
+    --danger-soft: #f6e9e4;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14181a;
+      --surface: #1c2224;
+      --surface-border: #2c3436;
+      --text: #eaece9;
+      --text-muted: #97a19b;
+      --accent: #59b79a;
+      --accent-ink: #0d1513;
+      --accent-soft: #1f2e29;
+      --danger: #e08468;
+      --danger-soft: #2c211d;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #14181a;
+    --surface: #1c2224;
+    --surface-border: #2c3436;
+    --text: #eaece9;
+    --text-muted: #97a19b;
+    --accent: #59b79a;
+    --accent-ink: #0d1513;
+    --accent-soft: #1f2e29;
+    --danger: #e08468;
+    --danger-soft: #2c211d;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: 14px;
+    padding: 32px 28px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0;
+    text-wrap: balance;
+    line-height: 1.25;
+  }
+
+  .status {
+    font-size: 14px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 20px;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex: none;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dot { animation: none; }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 1; }
+  }
+
+  .fields {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px;
+    background: var(--bg);
+    border: 1px solid var(--surface-border);
+    border-radius: 10px;
+  }
+
+  .field {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+  }
+
+  .field dt {
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .field dd {
+    margin: 0;
+    text-align: right;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+
+  .field dd.mono {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 13px 18px;
+    border-radius: 9px;
+    border: none;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    background: var(--accent);
+    color: var(--accent-ink);
+    transition: filter 0.15s ease;
+  }
+
+  .btn:hover { filter: brightness(1.06); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .btn svg { flex: none; }
+
+  .note {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .error {
+    padding: 14px 16px;
+    background: var(--danger-soft);
+    border: 1px solid var(--danger);
+    border-radius: 10px;
+    color: var(--danger);
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+
+  .error strong { display: block; margin-bottom: 4px; }
+
+  code {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 0.92em;
+    background: var(--surface-border);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+</style>
+
+<div class="card" id="card">
+  <div class="eyebrow">Cobranza · Grupo ROGA</div>
+  <h1 id="heading">Preparando tu chat de WhatsApp…</h1>
+  <div class="status" id="status"><span class="dot"></span><span id="statusText">Armando el mensaje</span></div>
+
+  <dl class="fields" id="fields" hidden>
+    <div class="field"><dt>Contacto</dt><dd id="fNombre" class="mono">—</dd></div>
+    <div class="field"><dt>Folio</dt><dd id="fFolio" class="mono">—</dd></div>
+    <div class="field"><dt>Número destino</dt><dd id="fNumero" class="mono">—</dd></div>
+  </dl>
+
+  <a class="btn" id="openBtn" href="#" hidden>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.2h.01c5.46 0 9.9-4.45 9.9-9.91S17.5 2 12.04 2zm5.8 14.02c-.24.68-1.4 1.32-1.93 1.4-.5.08-1.13.11-1.82-.11a16.7 16.7 0 0 1-1.65-.61c-2.9-1.25-4.79-4.17-4.94-4.36-.15-.2-1.18-1.57-1.18-3 0-1.42.75-2.12 1.01-2.41.27-.29.58-.36.78-.36.2 0 .39 0 .56.01.18.01.42-.07.65.5.24.58.82 2 .89 2.15.07.15.11.32.02.51-.09.2-.14.32-.27.49-.14.17-.29.38-.41.51-.14.14-.28.29-.12.57.16.28.72 1.19 1.55 1.93 1.06.95 1.96 1.25 2.24 1.39.28.14.44.12.6-.07.17-.2.71-.83.9-1.11.19-.28.38-.24.63-.14.26.09 1.65.78 1.93.92.28.14.47.21.54.33.07.13.07.72-.17 1.4z"/>
+    </svg>
+    <span id="openBtnLabel">Abrir chat de WhatsApp</span>
+  </a>
+
+  <div class="note" id="note">
+    Si no se abre solo, usa el botón de arriba. El mensaje llega listo en la caja de texto — nadie lo envía por ti.
+  </div>
+</div>
+
+<script>
+  (function () {
+    var params = new URLSearchParams(window.location.search);
+    var raw = params.get('d') || '';
+    var parts = raw.split('|');
+    var nombre = (parts[0] || '').trim();
+    var folio = (parts[1] || '').trim();
+    var numeroParam = (parts[2] || params.get('n') || '').trim();
+
+    // Número de prueba por defecto — reemplázalo por el número real de la gestora
+    // o pásalo en la plantilla como tercer segmento de "d" (nombre|folio|numero).
+    var NUMERO_DEFAULT = '5210000000000';
+    var numero = (numeroParam || NUMERO_DEFAULT).replace(/[^0-9]/g, '');
+
+    var heading = document.getElementById('heading');
+    var statusText = document.getElementById('statusText');
+    var card = document.getElementById('card');
+
+    if (!nombre || !folio) {
+      heading.textContent = 'Faltan datos para armar el mensaje';
+      document.querySelector('.status').hidden = true;
+      var err = document.createElement('div');
+      err.className = 'error';
+      err.innerHTML = '<strong>No se recibió nombre y/o folio.</strong>' +
+        'Este enlace debe abrirse con <code>?d=Nombre|Folio</code> ' +
+        '(y opcionalmente <code>|Numero</code>) en la URL.';
+      card.insertBefore(err, document.getElementById('note'));
+      return;
+    }
+
+    var mensaje = 'Hola, soy ' + nombre + '. Hablo para conocer mi situación de cobro con el folio ' + folio + '.';
+    var link = 'https://wa.me/' + numero + '?text=' + encodeURIComponent(mensaje);
+
+    document.getElementById('fNombre').textContent = nombre;
+    document.getElementById('fFolio').textContent = folio;
+    document.getElementById('fNumero').textContent = '+' + numero;
+    document.getElementById('fields').hidden = false;
+
+    var btn = document.getElementById('openBtn');
+    btn.href = link;
+    btn.hidden = false;
+
+    heading.textContent = 'Tu chat está listo';
+    statusText.textContent = 'Redirigiendo a WhatsApp…';
+
+    if (numeroParam === '' && numero === NUMERO_DEFAULT) {
+      var warn = document.createElement('div');
+      warn.className = 'error';
+      warn.innerHTML = '<strong>Usando número de prueba por defecto.</strong>' +
+        'Edita <code>NUMERO_DEFAULT</code> en esta página o agrega ' +
+        '<code>|Numero</code> al final del parámetro <code>d</code>.';
+      card.insertBefore(warn, document.getElementById('note'));
+    }
+
+    setTimeout(function () {
+      window.location.replace(link);
+    }, 700);
+  })();
+</script>
