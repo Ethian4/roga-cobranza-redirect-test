@@ -253,6 +253,10 @@
     var mensaje = 'Hola, soy ' + nombre + '. Hablo para conocer mi situación de cobro con el folio ' + folio + '.';
     var link = 'https://wa.me/' + numero + '?text=' + encodeURIComponent(mensaje);
 
+    // Redirige de inmediato, antes de terminar de pintar la tarjeta —
+    // lo de abajo solo queda visible si el navegador bloquea esta línea.
+    window.location.replace(link);
+
     document.getElementById('fNombre').textContent = nombre;
     document.getElementById('fFolio').textContent = folio;
     document.getElementById('fNumero').textContent = '+' + numero;
@@ -274,8 +278,5 @@
       card.insertBefore(warn, document.getElementById('note'));
     }
 
-    setTimeout(function () {
-      window.location.replace(link);
-    }, 700);
   })();
 </script>
