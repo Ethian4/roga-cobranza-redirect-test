@@ -1,3 +1,8 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Redirección Cobranza</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
@@ -196,6 +201,8 @@
     border-radius: 4px;
   }
 </style>
+</head>
+<body>
 
 <div class="card" id="card">
   <div class="eyebrow">Cobranza · Grupo ROGA</div>
@@ -203,8 +210,7 @@
   <div class="status" id="status"><span class="dot"></span><span id="statusText">Armando el mensaje</span></div>
 
   <dl class="fields" id="fields" hidden>
-    <div class="field"><dt>Contacto</dt><dd id="fNombre" class="mono">—</dd></div>
-    <div class="field"><dt>Folio</dt><dd id="fFolio" class="mono">—</dd></div>
+    <div class="field"><dt>Mensaje</dt><dd id="fMensaje" class="mono">—</dd></div>
     <div class="field"><dt>Número destino</dt><dd id="fNumero" class="mono">—</dd></div>
   </dl>
 
@@ -223,43 +229,57 @@
 <script>
   (function () {
     var params = new URLSearchParams(window.location.search);
-    var raw = params.get('d') || '';
-    var parts = raw.split('|');
-    var nombre = (parts[0] || '').trim();
-    var folio = (parts[1] || '').trim();
-    var numeroParam = (parts[2] || params.get('n') || '').trim();
 
-    // Número de prueba por defecto — reemplázalo por el número real de la gestora
-    // o pásalo en la plantilla como tercer segmento de "d" (nombre|folio|numero).
+    // Contrato nuevo: ?n=Numero&m=Mensaje (el mensaje ya viene armado, tal cual se manda)
+    var nParam = params.get('n');
+    var mParam = params.get('m');
+
+    var numero, mensaje;
+
+    if (nParam && mParam) {
+      numero = nParam;
+      mensaje = mParam;
+    } else {
+      // Compatibilidad con el contrato anterior: ?d=Nombre|Folio|Numero
+      var raw = params.get('d') || '';
+      var parts = raw.split('|');
+      var nombre = (parts[0] || '').trim();
+      var folio = (parts[1] || '').trim();
+      numero = (parts[2] || '').trim();
+      if (nombre && folio) {
+        mensaje = 'Hola, soy ' + nombre + '. Hablo para conocer mi situación de cobro con el folio ' + folio + '.';
+      }
+    }
+
+    // Número de prueba por defecto — se usa solo si no llegó ninguno en la URL.
     var NUMERO_DEFAULT = '5210000000000';
-    var numero = (numeroParam || NUMERO_DEFAULT).replace(/[^0-9]/g, '');
+    var numeroLimpio = (numero || NUMERO_DEFAULT).replace(/[^0-9]/g, '');
 
     var heading = document.getElementById('heading');
     var statusText = document.getElementById('statusText');
     var card = document.getElementById('card');
 
-    if (!nombre || !folio) {
+    if (!mensaje) {
       heading.textContent = 'Faltan datos para armar el mensaje';
       document.querySelector('.status').hidden = true;
       var err = document.createElement('div');
       err.className = 'error';
-      err.innerHTML = '<strong>No se recibió nombre y/o folio.</strong>' +
-        'Este enlace debe abrirse con <code>?d=Nombre|Folio</code> ' +
-        '(y opcionalmente <code>|Numero</code>) en la URL.';
+      err.innerHTML = '<strong>No se recibió un mensaje válido.</strong>' +
+        'Este enlace debe abrirse con <code>?n=Numero&m=Mensaje</code> ' +
+        '(o, en el formato anterior, <code>?d=Nombre|Folio|Numero</code>).';
       card.insertBefore(err, document.getElementById('note'));
       return;
     }
 
-    var mensaje = 'Hola, soy ' + nombre + '. Hablo para conocer mi situación de cobro con el folio ' + folio + '.';
-    var link = 'https://wa.me/' + numero + '?text=' + encodeURIComponent(mensaje);
+    var link = 'https://wa.me/' + numeroLimpio + '?text=' + encodeURIComponent(mensaje);
 
     // Redirige de inmediato, antes de terminar de pintar la tarjeta —
     // lo de abajo solo queda visible si el navegador bloquea esta línea.
     window.location.replace(link);
 
-    document.getElementById('fNombre').textContent = nombre;
-    document.getElementById('fFolio').textContent = folio;
-    document.getElementById('fNumero').textContent = '+' + numero;
+    document.getElementById('fMensaje').textContent =
+      mensaje.length > 80 ? mensaje.slice(0, 77) + '…' : mensaje;
+    document.getElementById('fNumero').textContent = '+' + numeroLimpio;
     document.getElementById('fields').hidden = false;
 
     var btn = document.getElementById('openBtn');
@@ -269,14 +289,16 @@
     heading.textContent = 'Tu chat está listo';
     statusText.textContent = 'Redirigiendo a WhatsApp…';
 
-    if (numeroParam === '' && numero === NUMERO_DEFAULT) {
+    if (!numero && numeroLimpio === NUMERO_DEFAULT) {
       var warn = document.createElement('div');
       warn.className = 'error';
       warn.innerHTML = '<strong>Usando número de prueba por defecto.</strong>' +
-        'Edita <code>NUMERO_DEFAULT</code> en esta página o agrega ' +
-        '<code>|Numero</code> al final del parámetro <code>d</code>.';
+        'Agrega <code>&n=Numero</code> a la URL (contrato nuevo), ' +
+        'o <code>|Numero</code> al final del parámetro <code>d</code> (formato anterior).';
       card.insertBefore(warn, document.getElementById('note'));
     }
 
   })();
 </script>
+</body>
+</html>
