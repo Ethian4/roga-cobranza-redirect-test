@@ -190,6 +190,19 @@
   function fmtDia(iso) { return new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }); }
   function unixToIso(ts) { return new Date(Number(ts) * 1000).toISOString(); }
 
+  // WhatsApp manda tipos de mensaje sin texto (stickers, imagenes, audios,
+  // etc.) -- sin esto, esos mensajes se veian como burbujas vacias.
+  var ETIQUETA_TIPO = {
+    sticker: '🏷️ Sticker', image: '🖼️ Imagen', video: '🎥 Video', audio: '🎤 Audio',
+    document: '📄 Documento', location: '📍 Ubicación', contacts: '👤 Contacto',
+  };
+  function textoDeMensaje(m) {
+    if (m.text && m.text.body) return m.text.body;
+    if (m.type === 'reaction' && m.reaction && m.reaction.emoji) return m.reaction.emoji + ' (reacción)';
+    if (m.type && ETIQUETA_TIPO[m.type]) return ETIQUETA_TIPO[m.type];
+    return '[mensaje sin texto' + (m.type ? ': ' + m.type : '') + ']';
+  }
+
   // --- Parseo de los eventos crudos de n8n a un formato limpio ---
   function parsearFila(fila) {
     var body;
@@ -203,7 +216,7 @@
     if (change.field === 'smb_message_echoes' && val.message_echoes && val.message_echoes[0]) {
       var eco = val.message_echoes[0];
       return {
-        tipo: 'mensaje', direccion: 'saliente', texto: eco.text && eco.text.body,
+        tipo: 'mensaje', direccion: 'saliente', texto: textoDeMensaje(eco),
         gestor_telefono: gestorTel, cliente_telefono: val.contacts && val.contacts[0] && val.contacts[0].wa_id,
         wamid: eco.id, ts: unixToIso(eco.timestamp),
       };
@@ -212,7 +225,7 @@
       var msg = val.messages[0];
       var perfil = val.contacts && val.contacts[0] && val.contacts[0].profile;
       return {
-        tipo: 'mensaje', direccion: 'entrante', texto: msg.text && msg.text.body,
+        tipo: 'mensaje', direccion: 'entrante', texto: textoDeMensaje(msg),
         gestor_telefono: gestorTel, cliente_telefono: val.contacts && val.contacts[0] && val.contacts[0].wa_id,
         nombre_cliente: perfil ? perfil.name : null,
         wamid: msg.id, ts: unixToIso(msg.timestamp),
