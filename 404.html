@@ -209,12 +209,12 @@
   <h1 id="heading">Preparando tu chat de WhatsApp…</h1>
   <div class="status" id="status"><span class="dot"></span><span id="statusText">Armando el mensaje</span></div>
 
-  <dl class="fields" id="fields" hidden>
+  <dl class="fields" id="fields">
     <div class="field"><dt>Mensaje</dt><dd id="fMensaje" class="mono">—</dd></div>
     <div class="field"><dt>Número destino</dt><dd id="fNumero" class="mono">—</dd></div>
   </dl>
 
-  <a class="btn" id="openBtn" href="#" hidden>
+  <a class="btn" id="openBtn" href="#">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.2h.01c5.46 0 9.9-4.45 9.9-9.91S17.5 2 12.04 2zm5.8 14.02c-.24.68-1.4 1.32-1.93 1.4-.5.08-1.13.11-1.82-.11a16.7 16.7 0 0 1-1.65-.61c-2.9-1.25-4.79-4.17-4.94-4.36-.15-.2-1.18-1.57-1.18-3 0-1.42.75-2.12 1.01-2.41.27-.29.58-.36.78-.36.2 0 .39 0 .56.01.18.01.42-.07.65.5.24.58.82 2 .89 2.15.07.15.11.32.02.51-.09.2-.14.32-.27.49-.14.17-.29.38-.41.51-.14.14-.28.29-.12.57.16.28.72 1.19 1.55 1.93 1.06.95 1.96 1.25 2.24 1.39.28.14.44.12.6-.07.17-.2.71-.83.9-1.11.19-.28.38-.24.63-.14.26.09 1.65.78 1.93.92.28.14.47.21.54.33.07.13.07.72-.17 1.4z"/>
     </svg>
@@ -286,21 +286,21 @@
 
     var link = 'https://wa.me/' + numeroLimpio + '?text=' + encodeURIComponent(mensaje);
 
-    // Redirige de inmediato, antes de terminar de pintar la tarjeta —
-    // lo de abajo solo queda visible si el navegador bloquea esta línea.
-    window.location.replace(link);
-
+    // Pinta la tarjeta completa (mensaje, número, botón funcional) ANTES de
+    // intentar la redirección automática -- el navegador interno de WhatsApp
+    // en iPhone a veces deja la página en blanco cuando el intento de
+    // navegación ocurre antes de que termine de pintar. Así, pase lo que
+    // pase con el salto automático, el usuario siempre ve algo real y
+    // funcional, nunca una pantalla en blanco.
     document.getElementById('fMensaje').textContent =
       mensaje.length > 80 ? mensaje.slice(0, 77) + '…' : mensaje;
     document.getElementById('fNumero').textContent = '+' + numeroLimpio;
-    document.getElementById('fields').hidden = false;
 
     var btn = document.getElementById('openBtn');
     btn.href = link;
-    btn.hidden = false;
 
     heading.textContent = 'Tu chat está listo';
-    statusText.textContent = 'Redirigiendo a WhatsApp…';
+    statusText.textContent = 'Abriendo WhatsApp…';
 
     if (!numero && numeroLimpio === NUMERO_DEFAULT) {
       var warn = document.createElement('div');
@@ -310,6 +310,12 @@
         'o <code>|Numero</code> al final del parámetro <code>d</code> (formato anterior).';
       card.insertBefore(warn, document.getElementById('note'));
     }
+
+    // El intento automático va DESPUÉS de pintar, y con un pequeño respiro
+    // para que el navegador termine el render antes de navegar.
+    setTimeout(function () {
+      window.location.href = link;
+    }, 60);
 
   })();
 </script>
