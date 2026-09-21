@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conversaciones Gestor · Grupo ROGA</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #f6f4f0;
+    --surface: #ffffff;
+    --surface-2: #fbfaf7;
+    --border: #e4e0d4;
+    --text: #201f1a;
+    --text-muted: #6b675c;
+    --text-faint: #989384;
+    --accent: #2f6f5e;
+    --accent-soft: #e4efe9;
+    --bubble-in: #ffffff;
+    --bubble-out: #dcf0e8;
+    --status: #4a90c4;
+    --warn: #a4432f;
+    --warn-soft: #f6e9e4;
+    --ok: #2f6f5e;
+    --shadow: 0 1px 2px rgba(30, 27, 18, 0.06), 0 4px 14px rgba(30, 27, 18, 0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15181a; --surface: #1d2224; --surface-2: #20262a; --border: #2c3437;
+      --text: #eceae4; --text-muted: #9a9689; --text-faint: #6d6a60;
+      --accent: #5cb79a; --accent-soft: #1c2e28; --bubble-in: #262c2f; --bubble-out: #23352f;
+      --status: #6fb0e6; --warn: #e08468; --warn-soft: #2c211d; --ok: #5cb79a;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+  }
+  .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+
+  .shell { display: flex; flex-direction: column; height: 100vh; }
+
+  header.top {
+    padding: 16px 24px; border-bottom: 1px solid var(--border); background: var(--surface);
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+  header.top .titles .eyebrow {
+    font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 3px;
+  }
+  header.top h1 { margin: 0; font-size: 18px; font-weight: 700; }
+  .estado-carga { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted); }
+  .estado-carga .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); flex: none; }
+  .estado-carga .dot.cargando { background: var(--status); animation: pulse 1s ease-in-out infinite; }
+  .estado-carga .dot.error { background: var(--warn); }
+  @keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:1} }
+
+  .layout { flex: 1; display: flex; min-height: 0; }
+
+  nav.convos { width: 300px; min-width: 220px; border-right: 1px solid var(--border); background: var(--surface); overflow-y: auto; flex-shrink: 0; }
+  nav.convos .section-label { padding: 14px 16px 6px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-faint); }
+  .convo-item { display: flex; flex-direction: column; gap: 3px; padding: 12px 16px; cursor: pointer; border-left: 3px solid transparent; border-bottom: 1px solid var(--border); }
+  .convo-item:hover { background: var(--surface-2); }
+  .convo-item.active { background: var(--accent-soft); border-left-color: var(--accent); }
+  .convo-item .row1 { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .convo-item .nombre { font-weight: 600; font-size: 13.5px; }
+  .convo-item .count { font-size: 11px; color: var(--text-faint); background: var(--surface-2); border: 1px solid var(--border); border-radius: 20px; padding: 1px 8px; flex-shrink: 0; }
+  .convo-item .preview { font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .convo-item .tel { font-size: 11px; color: var(--text-faint); }
+
+  main.thread { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .thread-header { padding: 14px 24px; border-bottom: 1px solid var(--border); background: var(--surface); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .thread-header .who { display: flex; gap: 20px; flex-wrap: wrap; }
+  .thread-header .who .label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-faint); }
+  .thread-header .who .val { font-size: 13px; font-weight: 600; }
+
+  .view-toggle { display: flex; gap: 2px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 2px; }
+  .view-toggle button { border: none; background: transparent; color: var(--text-muted); font: inherit; font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+  .view-toggle button.active { background: var(--surface); color: var(--accent); box-shadow: var(--shadow); }
+
+  .thread-body { flex: 1; overflow-y: auto; padding: 20px 24px; background: var(--bg); }
+  .day-sep { text-align: center; margin: 18px 0 14px; }
+  .day-sep span { font-size: 11px; color: var(--text-muted); background: var(--surface); border: 1px solid var(--border); padding: 3px 12px; border-radius: 20px; }
+
+  .bubble-row { display: flex; margin-bottom: 4px; }
+  .bubble-row.out { justify-content: flex-end; }
+  .bubble-row.in { justify-content: flex-start; }
+  .bubble { max-width: 62%; padding: 9px 12px 7px; border-radius: 12px; background: var(--bubble-in); box-shadow: var(--shadow); }
+  .bubble-row.out .bubble { background: var(--bubble-out); }
+  .bubble .txt { font-size: 14px; line-height: 1.42; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .bubble .sub { display: flex; align-items: center; justify-content: flex-end; gap: 4px; font-size: 10.5px; color: var(--text-faint); margin-top: 4px; }
+
+  .status-line { text-align: center; font-size: 11px; color: var(--text-faint); margin: 2px 0 12px; }
+  .status-line .tick { color: var(--status); font-weight: 700; }
+
+  .table-wrap { overflow-x: auto; }
+  table.events { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; font-size: 12.5px; }
+  table.events th { text-align: left; padding: 9px 12px; background: var(--surface-2); border-bottom: 1px solid var(--border); font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-faint); font-weight: 600; }
+  table.events td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  table.events tr:last-child td { border-bottom: none; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10.5px; font-weight: 600; }
+  .pill.in { background: var(--accent-soft); color: var(--accent); }
+  .pill.out { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
+  .pill.estado { background: var(--warn-soft); color: var(--warn); }
+
+  .empty { padding: 60px 24px; text-align: center; color: var(--text-muted); }
+  footer.note { padding: 10px 24px; border-top: 1px solid var(--border); background: var(--surface); font-size: 11.5px; color: var(--text-faint); }
+
+  @media (max-width: 720px) {
+    .layout { flex-direction: column; }
+    nav.convos { width: 100%; max-height: 180px; border-right: none; border-bottom: 1px solid var(--border); }
+    .bubble { max-width: 82%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <header class="top">
+    <div class="titles">
+      <div class="eyebrow">Grupo ROGA · Cobranza WhatsApp</div>
+      <h1>Conversaciones capturadas (Dualhook · Coexistence)</h1>
+    </div>
+    <div class="estado-carga"><span class="dot cargando" id="dot"></span><span id="estadoTexto">Cargando…</span></div>
+  </header>
+
+  <div class="layout">
+    <nav class="convos" id="convoList"></nav>
+    <main class="thread">
+      <div class="thread-header" id="threadHeader" hidden>
+        <div class="who">
+          <div><div class="label">Gestor</div><div class="val mono" id="whoGestor">—</div></div>
+          <div><div class="label">Cliente</div><div class="val mono" id="whoCliente">—</div></div>
+        </div>
+        <div class="view-toggle">
+          <button id="btnChat" class="active">Conversación</button>
+          <button id="btnTable">Tabla</button>
+        </div>
+      </div>
+      <div class="thread-body" id="threadBody"><div class="empty">Cargando conversaciones…</div></div>
+      <footer class="note">Datos capturados vía Meta WhatsApp Coexistence + Dualhook → n8n. Se actualiza solo cada 5 segundos. Solo lectura, ejemplo de piloto DEV.</footer>
+    </main>
+  </div>
+</div>
+
+<script>
+(function () {
+  var N8N_URL = 'https://gruporogapruebas.app.n8n.cloud/webhook/dualhook-consulta';
+  var REFRESH_MS = 5000;
+  var state = { conversaciones: [], activa: null, vista: 'chat' };
+
+  function fmtTelefono(t) {
+    if (!t) return '—';
+    var d = String(t).replace(/\D/g, '');
+    if (d.length === 13 && d.slice(0, 2) === '52') return '+52 1 ' + d.slice(3, 6) + ' ' + d.slice(6, 9) + ' ' + d.slice(9);
+    if (d.length === 12 && d.slice(0, 2) === '52') return '+52 ' + d.slice(2, 5) + ' ' + d.slice(5, 8) + ' ' + d.slice(8);
+    return '+' + d;
+  }
+  function fmtHora(iso) { return new Date(iso).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }); }
+  function fmtDia(iso) { return new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }); }
+  function unixToIso(ts) { return new Date(Number(ts) * 1000).toISOString(); }
+
+  // --- Parseo de los eventos crudos de n8n a un formato limpio ---
+  function parsearFila(fila) {
+    var body;
+    try { body = JSON.parse(fila.body_json); } catch (e) { return null; }
+    if (!body || !body.entry || !body.entry[0] || !body.entry[0].changes || !body.entry[0].changes[0]) return null;
+
+    var change = body.entry[0].changes[0];
+    var val = change.value || {};
+    var gestorTel = val.metadata && val.metadata.display_phone_number;
+
+    if (change.field === 'smb_message_echoes' && val.message_echoes && val.message_echoes[0]) {
+      var eco = val.message_echoes[0];
+      return {
+        tipo: 'mensaje', direccion: 'saliente', texto: eco.text && eco.text.body,
+        gestor_telefono: gestorTel, cliente_telefono: val.contacts && val.contacts[0] && val.contacts[0].wa_id,
+        wamid: eco.id, ts: unixToIso(eco.timestamp),
+      };
+    }
+    if (change.field === 'messages' && val.messages && val.messages[0]) {
+      var msg = val.messages[0];
+      var perfil = val.contacts && val.contacts[0] && val.contacts[0].profile;
+      return {
+        tipo: 'mensaje', direccion: 'entrante', texto: msg.text && msg.text.body,
+        gestor_telefono: gestorTel, cliente_telefono: val.contacts && val.contacts[0] && val.contacts[0].wa_id,
+        nombre_cliente: perfil ? perfil.name : null,
+        wamid: msg.id, ts: unixToIso(msg.timestamp),
+      };
+    }
+    if (change.field === 'messages' && val.statuses && val.statuses[0]) {
+      var st = val.statuses[0];
+      return {
+        tipo: 'estado', estado: st.status,
+        gestor_telefono: gestorTel, cliente_telefono: st.recipient_id,
+        wamid: st.id, ts: unixToIso(st.timestamp),
+      };
+    }
+    return null;
+  }
+
+  function claveConvo(e) { return e.gestor_telefono + '__' + e.cliente_telefono; }
+
+  function construirConversaciones(eventos) {
+    var mapa = {};
+    eventos.forEach(function (e) {
+      var k = claveConvo(e);
+      if (!mapa[k]) mapa[k] = { key: k, gestor_telefono: e.gestor_telefono, cliente_telefono: e.cliente_telefono, nombre_cliente: null, eventos: [] };
+      mapa[k].eventos.push(e);
+      if (e.nombre_cliente) mapa[k].nombre_cliente = e.nombre_cliente;
+    });
+    var lista = Object.keys(mapa).map(function (k) { return mapa[k]; });
+    lista.forEach(function (c) {
+      c.eventos.sort(function (a, b) { return new Date(a.ts) - new Date(b.ts); });
+      var ultimoMsg = c.eventos.filter(function (e) { return e.tipo === 'mensaje'; }).slice(-1)[0];
+      c.preview = ultimoMsg ? ultimoMsg.texto : '';
+      c.mensajesCount = c.eventos.filter(function (e) { return e.tipo === 'mensaje'; }).length;
+    });
+    lista.sort(function (a, b) {
+      var la = a.eventos[a.eventos.length - 1], lb = b.eventos[b.eventos.length - 1];
+      return new Date(lb.ts) - new Date(la.ts);
+    });
+    return lista;
+  }
+
+  function renderLista() {
+    var nav = document.getElementById('convoList');
+    nav.innerHTML = '';
+    var label = document.createElement('div');
+    label.className = 'section-label';
+    label.textContent = state.conversaciones.length + (state.conversaciones.length === 1 ? ' conversación' : ' conversaciones');
+    nav.appendChild(label);
+    state.conversaciones.forEach(function (c) {
+      var item = document.createElement('div');
+      item.className = 'convo-item' + (state.activa === c.key ? ' active' : '');
+      item.innerHTML =
+        '<div class="row1"><span class="nombre"></span><span class="count">' + c.mensajesCount + '</span></div>' +
+        '<div class="tel mono">' + fmtTelefono(c.cliente_telefono) + '</div>' +
+        '<div class="preview"></div>';
+      item.querySelector('.nombre').textContent = c.nombre_cliente || 'Cliente de prueba';
+      item.querySelector('.preview').textContent = c.preview || '';
+      item.addEventListener('click', function () { state.activa = c.key; state.vista = 'chat'; render(); });
+      nav.appendChild(item);
+    });
+  }
+
+  function renderChat(convo) {
+    var body = document.getElementById('threadBody');
+    body.innerHTML = '';
+    var diaActual = null;
+    convo.eventos.forEach(function (e) {
+      var dia = fmtDia(e.ts);
+      if (dia !== diaActual) {
+        diaActual = dia;
+        var sep = document.createElement('div');
+        sep.className = 'day-sep';
+        sep.innerHTML = '<span></span>';
+        sep.querySelector('span').textContent = dia;
+        body.appendChild(sep);
+      }
+      if (e.tipo === 'estado') {
+        var sl = document.createElement('div');
+        sl.className = 'status-line';
+        var etiqueta = e.estado === 'read' ? 'Leído' : e.estado === 'delivered' ? 'Entregado' : e.estado;
+        sl.innerHTML = '<span class="tick">✓✓</span> ' + etiqueta + ' · ' + fmtHora(e.ts);
+        body.appendChild(sl);
+        return;
+      }
+      var row = document.createElement('div');
+      row.className = 'bubble-row ' + (e.direccion === 'saliente' ? 'out' : 'in');
+      var bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.innerHTML = '<div class="txt"></div><div class="sub"></div>';
+      bubble.querySelector('.txt').textContent = e.texto || '';
+      bubble.querySelector('.sub').textContent = fmtHora(e.ts);
+      row.appendChild(bubble);
+      body.appendChild(row);
+    });
+    body.scrollTop = body.scrollHeight;
+  }
+
+  function renderTabla(convo) {
+    var body = document.getElementById('threadBody');
+    var tabla = document.createElement('div');
+    tabla.className = 'table-wrap';
+    var t = document.createElement('table');
+    t.className = 'events';
+    t.innerHTML = '<thead><tr><th>Hora</th><th>Evento</th><th>Detalle</th></tr></thead><tbody></tbody>';
+    var tbody = t.querySelector('tbody');
+    convo.eventos.forEach(function (e) {
+      var tr = document.createElement('tr');
+      var tdHora = document.createElement('td'); tdHora.className = 'mono'; tdHora.textContent = fmtHora(e.ts);
+      var tdEvento = document.createElement('td');
+      var pill = document.createElement('span');
+      if (e.tipo === 'estado') { pill.className = 'pill estado'; pill.textContent = e.estado; }
+      else if (e.direccion === 'saliente') { pill.className = 'pill out'; pill.textContent = 'gestor → cliente'; }
+      else { pill.className = 'pill in'; pill.textContent = 'cliente → gestor'; }
+      tdEvento.appendChild(pill);
+      var tdDetalle = document.createElement('td');
+      tdDetalle.className = e.tipo === 'estado' ? 'mono' : '';
+      tdDetalle.textContent = e.tipo === 'estado' ? (e.wamid || '').slice(0, 24) + '…' : (e.texto || '');
+      tr.appendChild(tdHora); tr.appendChild(tdEvento); tr.appendChild(tdDetalle);
+      tbody.appendChild(tr);
+    });
+    tabla.appendChild(t);
+    body.innerHTML = '';
+    body.appendChild(tabla);
+  }
+
+  function render() {
+    renderLista();
+    var header = document.getElementById('threadHeader');
+    var convo = state.conversaciones.find(function (c) { return c.key === state.activa; });
+    if (!convo) {
+      header.hidden = true;
+      document.getElementById('threadBody').innerHTML = '<div class="empty">' +
+        (state.conversaciones.length ? 'Selecciona una conversación de la izquierda.' : 'Todavía no hay conversaciones capturadas.') +
+        '</div>';
+      return;
+    }
+    header.hidden = false;
+    document.getElementById('whoGestor').textContent = fmtTelefono(convo.gestor_telefono);
+    document.getElementById('whoCliente').textContent = fmtTelefono(convo.cliente_telefono);
+    document.getElementById('btnChat').className = state.vista === 'chat' ? 'active' : '';
+    document.getElementById('btnTable').className = state.vista === 'table' ? 'active' : '';
+    if (state.vista === 'chat') renderChat(convo); else renderTabla(convo);
+  }
+
+  document.getElementById('btnChat').addEventListener('click', function () { state.vista = 'chat'; render(); });
+  document.getElementById('btnTable').addEventListener('click', function () { state.vista = 'table'; render(); });
+
+  function setEstado(texto, clase) {
+    document.getElementById('estadoTexto').textContent = texto;
+    document.getElementById('dot').className = 'dot' + (clase ? ' ' + clase : '');
+  }
+
+  async function refrescar() {
+    setEstado('Actualizando…', 'cargando');
+    try {
+      var res = await fetch(N8N_URL, { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      var data = await res.json();
+      var filas = (data && data.eventos) || [];
+      var eventos = filas.map(parsearFila).filter(Boolean);
+
+      var activaPrevia = state.activa;
+      state.conversaciones = construirConversaciones(eventos);
+      var sigueExistiendo = activaPrevia && state.conversaciones.some(function (c) { return c.key === activaPrevia; });
+      state.activa = sigueExistiendo ? activaPrevia : (state.conversaciones.length ? state.conversaciones[0].key : null);
+
+      render();
+      setEstado('Actualizado · ' + new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    } catch (err) {
+      setEstado('Error al actualizar (reintentando)', 'error');
+    }
+  }
+
+  refrescar();
+  setInterval(refrescar, REFRESH_MS);
+})();
+</script>
+</body>
+</html>
