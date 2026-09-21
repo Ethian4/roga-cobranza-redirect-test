@@ -60,6 +60,14 @@
   .estado-carga .dot.error { background: var(--warn); }
   @keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:1} }
 
+  .btn-refrescar {
+    margin-left: 4px; font: inherit; font-size: 12px; font-weight: 600; color: var(--accent);
+    background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 20px;
+    padding: 5px 12px; cursor: pointer;
+  }
+  .btn-refrescar:hover { filter: brightness(1.05); }
+  .btn-refrescar:disabled { opacity: .5; cursor: default; }
+
   .layout { flex: 1; display: flex; min-height: 0; }
 
   nav.convos { width: 300px; min-width: 220px; border-right: 1px solid var(--border); background: var(--surface); overflow-y: auto; flex-shrink: 0; }
@@ -133,7 +141,10 @@
       <div class="eyebrow">Grupo ROGA · Cobranza WhatsApp</div>
       <h1>Historial de conversaciones</h1>
     </div>
-    <div class="estado-carga"><span class="dot cargando" id="dot"></span><span id="estadoTexto">Cargando…</span></div>
+    <div class="estado-carga">
+      <span class="dot cargando" id="dot"></span><span id="estadoTexto">Cargando…</span>
+      <button class="btn-refrescar" id="btnRefrescar">Actualizar</button>
+    </div>
   </header>
 
   <div class="layout">
@@ -162,7 +173,9 @@
 (function () {
   var N8N_URL = 'https://gruporogapruebas.app.n8n.cloud/webhook/dualhook-consulta';
   var NOMBRES_URL = 'https://gruporogapruebas.app.n8n.cloud/webhook/leer-nombres';
-  var REFRESH_MS = 5000;
+  // Sin auto-refresco: cada carga consume 2 ejecuciones de tu cuota de n8n
+  // Cloud (1000 totales) -- se actualiza solo al cargar la página o con el
+  // botón "Actualizar", nunca sola de fondo.
   var nombresPorTelefono = {}; // ultimos10 -> nombre_cliente (de la base real, prioridad sobre el nombre de WhatsApp)
   var state = { conversaciones: [], activa: null, vista: 'chat', gestorFiltro: null };
 
@@ -403,6 +416,8 @@
   }
 
   async function refrescar() {
+    var btn = document.getElementById('btnRefrescar');
+    btn.disabled = true;
     setEstado('Actualizando…', 'cargando');
     try {
       await cargarNombres();
@@ -420,12 +435,13 @@
       render();
       setEstado('Actualizado · ' + new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
     } catch (err) {
-      setEstado('Error al actualizar (reintentando)', 'error');
+      setEstado('Error al actualizar', 'error');
     }
+    btn.disabled = false;
   }
 
+  document.getElementById('btnRefrescar').addEventListener('click', refrescar);
   refrescar();
-  setInterval(refrescar, REFRESH_MS);
 })();
 </script>
 </body>
