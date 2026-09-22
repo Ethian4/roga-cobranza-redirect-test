@@ -1,0 +1,2 @@
+# Sin reglas -- el fallback de 200 en rutas no encontradas lo maneja
+# wrangler.jsonc (assets.not_found_handling: single-page-application).
