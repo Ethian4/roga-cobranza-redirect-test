@@ -16,6 +16,7 @@
     --text-muted: #6b675c;
     --text-faint: #989384;
     --accent: #2f6f5e;
+    --accent-ink: #ffffff;
     --accent-soft: #e4efe9;
     --bubble-in: #ffffff;
     --bubble-out: #dcf0e8;
@@ -24,14 +25,16 @@
     --warn-soft: #f6e9e4;
     --ok: #2f6f5e;
     --shadow: 0 1px 2px rgba(30, 27, 18, 0.06), 0 4px 14px rgba(30, 27, 18, 0.05);
+    --shadow-lift: 0 4px 10px rgba(30, 27, 18, 0.08), 0 12px 28px rgba(30, 27, 18, 0.1);
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #15181a; --surface: #1d2224; --surface-2: #20262a; --border: #2c3437;
       --text: #eceae4; --text-muted: #9a9689; --text-faint: #6d6a60;
-      --accent: #5cb79a; --accent-soft: #1c2e28; --bubble-in: #262c2f; --bubble-out: #23352f;
+      --accent: #5cb79a; --accent-ink: #0c1513; --accent-soft: #1c2e28; --bubble-in: #262c2f; --bubble-out: #23352f;
       --status: #6fb0e6; --warn: #e08468; --warn-soft: #2c211d; --ok: #5cb79a;
       --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25);
+      --shadow-lift: 0 4px 10px rgba(0,0,0,.35), 0 12px 28px rgba(0,0,0,.3);
     }
   }
 
@@ -43,6 +46,7 @@
     font-size: 14px;
   }
   .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  button { font-family: inherit; }
 
   .shell { display: flex; flex-direction: column; height: 100vh; }
 
@@ -61,7 +65,7 @@
   @keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:1} }
 
   .btn-refrescar {
-    margin-left: 4px; font: inherit; font-size: 12px; font-weight: 600; color: var(--accent);
+    margin-left: 4px; font-size: 12px; font-weight: 600; color: var(--accent);
     background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 20px;
     padding: 5px 12px; cursor: pointer;
   }
@@ -70,32 +74,86 @@
 
   .layout { flex: 1; display: flex; min-height: 0; }
 
-  nav.convos { width: 300px; min-width: 220px; border-right: 1px solid var(--border); background: var(--surface); overflow-y: auto; flex-shrink: 0; }
-  nav.convos .section-label { padding: 14px 16px 6px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-faint); }
+  /* --- Barra lateral --- */
+  nav.sidebar { width: 320px; min-width: 260px; border-right: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; flex-shrink: 0; }
+  .sidebar-section { padding: 16px 16px 4px; }
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-faint); padding: 0 16px 6px; }
 
-  .gestor-list { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 12px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
-  .gestor-chip {
-    font-size: 12px; font-weight: 600; padding: 5px 11px; border-radius: 20px; cursor: pointer;
-    background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border);
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%; flex: none;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12.5px; font-weight: 700; color: #fff;
   }
-  .gestor-chip.active { background: var(--accent); color: var(--surface); border-color: var(--accent); }
-  .convo-item { display: flex; flex-direction: column; gap: 3px; padding: 12px 16px; cursor: pointer; border-left: 3px solid transparent; border-bottom: 1px solid var(--border); }
+  .avatar.sm { width: 28px; height: 28px; font-size: 11px; }
+
+  /* Selector de gestora (dropdown a la medida) */
+  .gestor-select { position: relative; padding: 0 16px 14px; border-bottom: 1px solid var(--border); }
+  .gestor-trigger {
+    width: 100%; display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 11px; cursor: pointer;
+  }
+  .gestor-trigger:hover { border-color: var(--accent); }
+  .gestor-trigger .info { flex: 1; min-width: 0; text-align: left; }
+  .gestor-trigger .nombre { font-weight: 600; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gestor-trigger .sub { font-size: 11.5px; color: var(--text-faint); }
+  .gestor-trigger .chev { flex: none; color: var(--text-faint); transition: transform .15s ease; }
+  .gestor-trigger.abierto .chev { transform: rotate(180deg); }
+
+  .gestor-menu {
+    position: absolute; left: 16px; right: 16px; top: calc(100% - 8px); z-index: 20;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    box-shadow: var(--shadow-lift); padding: 6px; max-height: 320px; overflow-y: auto;
+  }
+  .gestor-opcion {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer;
+  }
+  .gestor-opcion:hover { background: var(--surface-2); }
+  .gestor-opcion.activa { background: var(--accent-soft); }
+  .gestor-opcion .info { flex: 1; min-width: 0; }
+  .gestor-opcion .nombre { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gestor-opcion .sub { font-size: 11px; color: var(--text-faint); }
+  .gestor-opcion .badge { font-size: 10.5px; color: var(--text-faint); background: var(--surface-2); border: 1px solid var(--border); border-radius: 20px; padding: 1px 7px; flex: none; }
+
+  /* Tarjeta de uso básico */
+  .stats {
+    margin: 0 16px 14px; padding: 12px 14px; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 11px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px;
+  }
+  .stats .stat-full { grid-column: 1 / -1; }
+  .stats .num { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stats .lbl { font-size: 10.5px; color: var(--text-faint); text-transform: uppercase; letter-spacing: .04em; }
+
+  /* Buscador */
+  .buscador { margin: 0 16px 10px; position: relative; }
+  .buscador input {
+    width: 100%; padding: 8px 12px 8px 32px; border-radius: 9px; border: 1px solid var(--border);
+    background: var(--surface-2); color: var(--text); font: inherit; font-size: 13px;
+  }
+  .buscador input:focus { outline: none; border-color: var(--accent); }
+  .buscador svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-faint); }
+
+  /* Lista de conversaciones */
+  .convo-list { flex: 1; overflow-y: auto; border-top: 1px solid var(--border); }
+  .convo-item { display: flex; gap: 10px; padding: 11px 16px; cursor: pointer; border-left: 3px solid transparent; border-bottom: 1px solid var(--border); }
   .convo-item:hover { background: var(--surface-2); }
   .convo-item.active { background: var(--accent-soft); border-left-color: var(--accent); }
-  .convo-item .row1 { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  .convo-item .nombre { font-weight: 600; font-size: 13.5px; }
-  .convo-item .count { font-size: 11px; color: var(--text-faint); background: var(--surface-2); border: 1px solid var(--border); border-radius: 20px; padding: 1px 8px; flex-shrink: 0; }
+  .convo-item .cuerpo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .convo-item .row1 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .convo-item .nombre { font-weight: 600; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .convo-item .hora { font-size: 10.5px; color: var(--text-faint); flex: none; }
+  .convo-item .row2 { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .convo-item .preview { font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .convo-item .tel { font-size: 11px; color: var(--text-faint); }
+  .convo-item .count { font-size: 10.5px; color: var(--accent); background: var(--accent-soft); border-radius: 20px; padding: 1px 7px; flex: none; font-weight: 600; }
 
+  /* --- Panel principal --- */
   main.thread { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-  .thread-header { padding: 14px 24px; border-bottom: 1px solid var(--border); background: var(--surface); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .thread-header .who { display: flex; gap: 20px; flex-wrap: wrap; }
-  .thread-header .who .label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-faint); }
-  .thread-header .who .val { font-size: 13px; font-weight: 600; }
+  .thread-header { padding: 12px 24px; border-bottom: 1px solid var(--border); background: var(--surface); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .thread-header .who { display: flex; align-items: center; gap: 12px; }
+  .thread-header .who .nombre { font-size: 14px; font-weight: 700; }
+  .thread-header .who .sub { font-size: 12px; color: var(--text-faint); }
 
   .view-toggle { display: flex; gap: 2px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 2px; }
-  .view-toggle button { border: none; background: transparent; color: var(--text-muted); font: inherit; font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+  .view-toggle button { border: none; background: transparent; color: var(--text-muted); font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
   .view-toggle button.active { background: var(--surface); color: var(--accent); box-shadow: var(--shadow); }
 
   .thread-body { flex: 1; overflow-y: auto; padding: 20px 24px; background: var(--bg); }
@@ -124,11 +182,10 @@
   .pill.estado { background: var(--warn-soft); color: var(--warn); }
 
   .empty { padding: 60px 24px; text-align: center; color: var(--text-muted); }
-  footer.note { padding: 10px 24px; border-top: 1px solid var(--border); background: var(--surface); font-size: 11.5px; color: var(--text-faint); }
 
   @media (max-width: 720px) {
     .layout { flex-direction: column; }
-    nav.convos { width: 100%; max-height: 180px; border-right: none; border-bottom: 1px solid var(--border); }
+    nav.sidebar { width: 100%; max-height: 45vh; border-right: none; border-bottom: 1px solid var(--border); }
     .bubble { max-width: 82%; }
   }
 </style>
@@ -148,16 +205,30 @@
   </header>
 
   <div class="layout">
-    <nav class="convos">
-      <div class="section-label">Gestoras</div>
-      <div class="gestor-list" id="gestorList"></div>
-      <div id="convoList"></div>
+    <nav class="sidebar">
+      <div class="section-label">Gestora</div>
+      <div class="gestor-select" id="gestorSelect">
+        <button class="gestor-trigger" id="gestorTrigger" type="button"></button>
+        <div class="gestor-menu" id="gestorMenu" hidden></div>
+      </div>
+
+      <div class="stats" id="stats" hidden></div>
+
+      <div class="buscador">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="buscarInput" placeholder="Buscar cliente…" autocomplete="off">
+      </div>
+
+      <div class="convo-list" id="convoList"></div>
     </nav>
     <main class="thread">
       <div class="thread-header" id="threadHeader" hidden>
         <div class="who">
-          <div><div class="label">Gestor</div><div class="val mono" id="whoGestor">—</div></div>
-          <div><div class="label">Cliente</div><div class="val mono" id="whoCliente">—</div></div>
+          <div class="avatar sm" id="whoAvatar"></div>
+          <div>
+            <div class="nombre" id="whoNombre">—</div>
+            <div class="sub mono" id="whoTelefono">—</div>
+          </div>
         </div>
         <div class="view-toggle">
           <button id="btnChat" class="active">Conversación</button>
@@ -177,7 +248,18 @@
   // Cloud (1000 totales) -- se actualiza solo al cargar la página o con el
   // botón "Actualizar", nunca sola de fondo.
   var nombresPorTelefono = {}; // ultimos10 -> nombre_cliente (de la base real, prioridad sobre el nombre de WhatsApp)
-  var state = { conversaciones: [], activa: null, vista: 'chat', gestorFiltro: null };
+
+  // Nombres de gestoras -- todavía no existe una fuente real de esto en la
+  // base de datos (solo tenemos su código interno y su teléfono). Mientras
+  // se define esa fuente, se mantiene aquí a mano.
+  var GESTOR_NOMBRES = {
+    '5216632033349': 'Gestora de prueba',
+  };
+  function nombreGestor(tel) {
+    return GESTOR_NOMBRES[tel] || ('Gestora ' + fmtTelefono(tel));
+  }
+
+  var state = { conversaciones: [], activa: null, vista: 'chat', gestorFiltro: null, busqueda: '', menuAbierto: false };
 
   function fmtTelefono(t) {
     if (!t) return '—';
@@ -189,6 +271,37 @@
   function fmtHora(iso) { return new Date(iso).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }); }
   function fmtDia(iso) { return new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }); }
   function unixToIso(ts) { return new Date(Number(ts) * 1000).toISOString(); }
+
+  function fmtRelativo(iso) {
+    var ms = Date.now() - new Date(iso).getTime();
+    var min = Math.round(ms / 60000);
+    if (min < 1) return 'ahora mismo';
+    if (min < 60) return 'hace ' + min + ' min';
+    var h = Math.round(min / 60);
+    if (h < 24) return 'hace ' + h + ' h';
+    var d = Math.round(h / 24);
+    if (d === 1) return 'ayer';
+    if (d < 7) return 'hace ' + d + ' días';
+    return fmtDia(iso);
+  }
+
+  var PALETA_AVATAR = ['#2f6f5e', '#4a90c4', '#a4432f', '#9c7a2e', '#6b5b95', '#b5495b'];
+  function colorAvatar(seed) {
+    var s = String(seed || ''), h = 0;
+    for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return PALETA_AVATAR[h % PALETA_AVATAR.length];
+  }
+  function iniciales(nombre) {
+    var partes = (nombre || '?').trim().split(/\s+/);
+    var a = (partes[0] || '')[0] || '';
+    var b = (partes[1] || '')[0] || '';
+    return (a + b).toUpperCase();
+  }
+  function pintarAvatar(el, nombre, chico) {
+    el.className = 'avatar' + (chico ? ' sm' : '');
+    el.style.background = colorAvatar(nombre);
+    el.textContent = iniciales(nombre);
+  }
 
   // WhatsApp manda tipos de mensaje sin texto (stickers, imagenes, audios,
   // etc.) -- sin esto, esos mensajes se veian como burbujas vacias.
@@ -258,61 +371,144 @@
       var ultimoMsg = c.eventos.filter(function (e) { return e.tipo === 'mensaje'; }).slice(-1)[0];
       c.preview = ultimoMsg ? ultimoMsg.texto : '';
       c.mensajesCount = c.eventos.filter(function (e) { return e.tipo === 'mensaje'; }).length;
+      c.ultimoTs = c.eventos[c.eventos.length - 1].ts;
       // El nombre real de la base de datos manda sobre el nombre de perfil de WhatsApp, cuando existe.
       var ultimos10 = String(c.cliente_telefono || '').replace(/\D/g, '').slice(-10);
       if (nombresPorTelefono[ultimos10]) c.nombre_cliente = nombresPorTelefono[ultimos10];
     });
-    lista.sort(function (a, b) {
-      var la = a.eventos[a.eventos.length - 1], lb = b.eventos[b.eventos.length - 1];
-      return new Date(lb.ts) - new Date(la.ts);
-    });
+    lista.sort(function (a, b) { return new Date(b.ultimoTs) - new Date(a.ultimoTs); });
     return lista;
   }
 
-  function renderGestores() {
-    var cont = document.getElementById('gestorList');
-    cont.innerHTML = '';
-    var gestores = [];
+  function listaGestoras() {
+    var vistos = [], out = [];
     state.conversaciones.forEach(function (c) {
-      if (gestores.indexOf(c.gestor_telefono) === -1) gestores.push(c.gestor_telefono);
+      if (vistos.indexOf(c.gestor_telefono) === -1) {
+        vistos.push(c.gestor_telefono);
+        out.push(c.gestor_telefono);
+      }
     });
+    return out;
+  }
 
-    var todos = document.createElement('div');
-    todos.className = 'gestor-chip' + (state.gestorFiltro === null ? ' active' : '');
-    todos.textContent = 'Todas';
-    todos.addEventListener('click', function () { state.gestorFiltro = null; state.activa = null; render(); });
-    cont.appendChild(todos);
+  function conversacionesDe(gestorTel) {
+    return gestorTel
+      ? state.conversaciones.filter(function (c) { return c.gestor_telefono === gestorTel; })
+      : state.conversaciones;
+  }
 
-    gestores.forEach(function (g) {
-      var chip = document.createElement('div');
-      chip.className = 'gestor-chip' + (state.gestorFiltro === g ? ' active' : '');
-      chip.textContent = fmtTelefono(g);
-      chip.addEventListener('click', function () { state.gestorFiltro = g; state.activa = null; render(); });
-      cont.appendChild(chip);
+  function conversacionesVisibles() {
+    var lista = conversacionesDe(state.gestorFiltro);
+    var q = state.busqueda.trim().toLowerCase();
+    if (!q) return lista;
+    return lista.filter(function (c) {
+      return (c.nombre_cliente || '').toLowerCase().indexOf(q) !== -1 ||
+             String(c.cliente_telefono || '').indexOf(q) !== -1;
     });
   }
 
+  // --- Selector de gestora ---
+  function renderGestorSelector() {
+    var gestoras = listaGestoras();
+    var trigger = document.getElementById('gestorTrigger');
+    trigger.innerHTML = '';
+    trigger.className = 'gestor-trigger' + (state.menuAbierto ? ' abierto' : '');
+
+    var av = document.createElement('div');
+    if (state.gestorFiltro) pintarAvatar(av, nombreGestor(state.gestorFiltro), true);
+    else { av.className = 'avatar sm'; av.style.background = 'var(--text-faint)'; av.textContent = 'T'; }
+    trigger.appendChild(av);
+
+    var info = document.createElement('div');
+    info.className = 'info';
+    var conteo = conversacionesDe(state.gestorFiltro).length;
+    info.innerHTML = '<div class="nombre"></div><div class="sub"></div>';
+    info.querySelector('.nombre').textContent = state.gestorFiltro ? nombreGestor(state.gestorFiltro) : 'Todas las gestoras';
+    info.querySelector('.sub').textContent = conteo + (conteo === 1 ? ' conversación' : ' conversaciones');
+    trigger.appendChild(info);
+
+    var chev = document.createElement('div');
+    chev.className = 'chev';
+    chev.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>';
+    trigger.appendChild(chev);
+
+    var menu = document.getElementById('gestorMenu');
+    menu.hidden = !state.menuAbierto;
+    menu.innerHTML = '';
+
+    function opcion(tel, etiqueta) {
+      var op = document.createElement('div');
+      op.className = 'gestor-opcion' + (state.gestorFiltro === tel ? ' activa' : '');
+      var a = document.createElement('div');
+      if (tel) pintarAvatar(a, nombreGestor(tel), true);
+      else { a.className = 'avatar sm'; a.style.background = 'var(--text-faint)'; a.textContent = 'T'; }
+      var inf = document.createElement('div');
+      inf.className = 'info';
+      inf.innerHTML = '<div class="nombre"></div>' + (tel ? '<div class="sub mono"></div>' : '');
+      inf.querySelector('.nombre').textContent = etiqueta;
+      if (tel) inf.querySelector('.sub').textContent = fmtTelefono(tel);
+      var badge = document.createElement('div');
+      badge.className = 'badge';
+      var n = conversacionesDe(tel).length;
+      badge.textContent = n;
+      op.appendChild(a); op.appendChild(inf); op.appendChild(badge);
+      op.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        state.gestorFiltro = tel; state.activa = null; state.menuAbierto = false; render();
+      });
+      return op;
+    }
+
+    menu.appendChild(opcion(null, 'Todas las gestoras'));
+    gestoras.forEach(function (g) { menu.appendChild(opcion(g, nombreGestor(g))); });
+  }
+
+  // --- Tarjeta de uso básico (solo con una gestora seleccionada) ---
+  function renderStats() {
+    var cont = document.getElementById('stats');
+    if (!state.gestorFiltro) { cont.hidden = true; return; }
+    var convos = conversacionesDe(state.gestorFiltro);
+    var totalMsg = convos.reduce(function (acc, c) { return acc + c.mensajesCount; }, 0);
+    var ultima = convos.length ? convos.reduce(function (a, b) { return new Date(a.ultimoTs) > new Date(b.ultimoTs) ? a : b; }).ultimoTs : null;
+
+    cont.hidden = false;
+    cont.innerHTML =
+      '<div><div class="num">' + convos.length + '</div><div class="lbl">Conversaciones</div></div>' +
+      '<div><div class="num">' + totalMsg + '</div><div class="lbl">Mensajes</div></div>' +
+      '<div class="stat-full"><div class="num" style="font-size:13px">' + (ultima ? fmtRelativo(ultima) : '—') + '</div><div class="lbl">Última actividad</div></div>';
+  }
+
   function renderLista() {
-    var nav = document.getElementById('convoList');
-    nav.innerHTML = '';
-    var visibles = state.gestorFiltro
-      ? state.conversaciones.filter(function (c) { return c.gestor_telefono === state.gestorFiltro; })
-      : state.conversaciones;
-    var label = document.createElement('div');
-    label.className = 'section-label';
-    label.textContent = visibles.length + (visibles.length === 1 ? ' conversación' : ' conversaciones');
-    nav.appendChild(label);
+    var cont = document.getElementById('convoList');
+    cont.innerHTML = '';
+    var visibles = conversacionesVisibles();
+
+    if (!visibles.length) {
+      cont.innerHTML = '<div class="empty" style="padding:32px 16px;font-size:13px">Sin conversaciones que coincidan.</div>';
+      return;
+    }
+
     visibles.forEach(function (c) {
       var item = document.createElement('div');
       item.className = 'convo-item' + (state.activa === c.key ? ' active' : '');
-      item.innerHTML =
-        '<div class="row1"><span class="nombre"></span><span class="count">' + c.mensajesCount + '</span></div>' +
-        '<div class="tel mono">' + fmtTelefono(c.cliente_telefono) + '</div>' +
-        '<div class="preview"></div>';
-      item.querySelector('.nombre').textContent = c.nombre_cliente || 'Cliente de prueba';
-      item.querySelector('.preview').textContent = c.preview || '';
+
+      var av = document.createElement('div');
+      pintarAvatar(av, c.nombre_cliente || c.cliente_telefono, false);
+      item.appendChild(av);
+
+      var cuerpo = document.createElement('div');
+      cuerpo.className = 'cuerpo';
+      cuerpo.innerHTML =
+        '<div class="row1"><span class="nombre"></span><span class="hora"></span></div>' +
+        '<div class="row2"><span class="preview"></span><span class="count"></span></div>';
+      cuerpo.querySelector('.nombre').textContent = c.nombre_cliente || fmtTelefono(c.cliente_telefono);
+      cuerpo.querySelector('.hora').textContent = fmtHora(c.ultimoTs);
+      cuerpo.querySelector('.preview').textContent = c.preview || '';
+      cuerpo.querySelector('.count').textContent = c.mensajesCount;
+      item.appendChild(cuerpo);
+
       item.addEventListener('click', function () { state.activa = c.key; state.vista = 'chat'; render(); });
-      nav.appendChild(item);
+      cont.appendChild(item);
     });
   }
 
@@ -380,12 +576,12 @@
   }
 
   function render() {
-    renderGestores();
+    renderGestorSelector();
+    renderStats();
     renderLista();
+
     var header = document.getElementById('threadHeader');
-    var visibles = state.gestorFiltro
-      ? state.conversaciones.filter(function (c) { return c.gestor_telefono === state.gestorFiltro; })
-      : state.conversaciones;
+    var visibles = conversacionesVisibles();
     var convo = visibles.find(function (c) { return c.key === state.activa; });
     if (!convo && visibles.length) { convo = visibles[0]; state.activa = convo.key; }
     if (!convo) {
@@ -396,9 +592,9 @@
       return;
     }
     header.hidden = false;
-    document.getElementById('whoGestor').textContent = fmtTelefono(convo.gestor_telefono);
-    document.getElementById('whoCliente').textContent =
-      (convo.nombre_cliente ? convo.nombre_cliente + ' · ' : '') + fmtTelefono(convo.cliente_telefono);
+    pintarAvatar(document.getElementById('whoAvatar'), convo.nombre_cliente || convo.cliente_telefono, true);
+    document.getElementById('whoNombre').textContent = convo.nombre_cliente || 'Cliente sin nombre registrado';
+    document.getElementById('whoTelefono').textContent = fmtTelefono(convo.cliente_telefono) + ' · gestora: ' + nombreGestor(convo.gestor_telefono);
     document.getElementById('btnChat').className = state.vista === 'chat' ? 'active' : '';
     document.getElementById('btnTable').className = state.vista === 'table' ? 'active' : '';
     if (state.vista === 'chat') renderChat(convo); else renderTabla(convo);
@@ -406,6 +602,20 @@
 
   document.getElementById('btnChat').addEventListener('click', function () { state.vista = 'chat'; render(); });
   document.getElementById('btnTable').addEventListener('click', function () { state.vista = 'table'; render(); });
+
+  document.getElementById('gestorTrigger').addEventListener('click', function (ev) {
+    ev.stopPropagation();
+    state.menuAbierto = !state.menuAbierto;
+    render();
+  });
+  document.addEventListener('click', function () {
+    if (state.menuAbierto) { state.menuAbierto = false; render(); }
+  });
+
+  document.getElementById('buscarInput').addEventListener('input', function (e) {
+    state.busqueda = e.target.value;
+    renderLista();
+  });
 
   function setEstado(texto, clase) {
     document.getElementById('estadoTexto').textContent = texto;
