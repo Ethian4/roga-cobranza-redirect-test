@@ -230,12 +230,17 @@
   (function () {
     // Twilio a veces pega el valor de la variable del botón directo después de
     // la carpeta, SIN el "?" (queda como parte de la ruta, no del query string).
-    // GitHub Pages entonces sirve este mismo archivo como 404.html, pero el
-    // navegador conserva la URL original pedida — por eso buscamos "n=" o "d="
-    // en toda la URL (pathname incluido), no solo en location.search.
+    // El navegador conserva la URL original pedida — por eso buscamos "n=" o
+    // "d=" en toda la URL (pathname incluido), no solo en location.search.
+    // Cloudflare además normaliza esa ruta y convierte "=" en "%3D" y "&" en
+    // "%26" antes de hacer su propio redirect interno a la version 200 --
+    // deshacemos SOLO esos dos, sin tocar el resto del encoding (el del
+    // mensaje en sí, que URLSearchParams necesita decodificar una sola vez).
     var params = new URLSearchParams(window.location.search);
     if (!params.get('n') && !params.get('d')) {
-      var urlCompleta = window.location.pathname + window.location.search + window.location.hash;
+      var urlCompleta = (window.location.pathname + window.location.search + window.location.hash)
+        .replace(/%3D/gi, '=')
+        .replace(/%26/gi, '&');
       var idx = urlCompleta.indexOf('n=');
       if (idx === -1) idx = urlCompleta.indexOf('d=');
       if (idx !== -1) {
