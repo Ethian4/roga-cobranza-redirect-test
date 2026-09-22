@@ -249,11 +249,12 @@
   // botón "Actualizar", nunca sola de fondo.
   var nombresPorTelefono = {}; // ultimos10 -> nombre_cliente (de la base real, prioridad sobre el nombre de WhatsApp)
 
-  // Nombres de gestoras -- todavía no existe una fuente real de esto en la
-  // base de datos (solo tenemos su código interno y su teléfono). Mientras
-  // se define esa fuente, se mantiene aquí a mano.
+  // Nombres de gestoras -- todavía no existe un endpoint que los traiga en
+  // vivo (la fuente real es ROGA.dbo.Telefonos_Gestores_Telefonicos cruzada
+  // con ERP_CIE.dbo.Personal por persona=Gestor). Mientras se automatiza,
+  // se mantiene aquí a mano.
   var GESTOR_NOMBRES = {
-    '5216632033349': 'Gestora de prueba',
+    '5216632033349': 'Ethian Martínez', // gestor 9927
   };
   function nombreGestor(tel) {
     return GESTOR_NOMBRES[tel] || ('Gestora ' + fmtTelefono(tel));
